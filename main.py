@@ -97,8 +97,15 @@ def analyze_video_with_gemini(video_path, caption):
     return response.text
 
 def main():
-    if not all([GEMINI_API_KEY, TELEGRAM_TOKEN, TELEGRAM_CHAT_ID, TARGET_USER]):
-        print("필수 환경 변수(Secrets)가 설정되지 않았습니다.")
+    # 어떤 환경변수가 누락되었는지 출력
+    missing_vars = []
+    if not GEMINI_API_KEY: missing_vars.append("GEMINI_API_KEY")
+    if not TELEGRAM_TOKEN: missing_vars.append("TELEGRAM_TOKEN")
+    if not TELEGRAM_CHAT_ID: missing_vars.append("TELEGRAM_CHAT_ID")
+    if not TARGET_USER: missing_vars.append("TARGET_INSTA_USER")
+
+    if missing_vars:
+        print(f"누락된 필수 환경 변수: {', '.join(missing_vars)}")
         return
 
     try:
