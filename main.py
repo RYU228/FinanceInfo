@@ -6,7 +6,7 @@ from google import genai
 
 # 환경 변수 로드
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
-TELEGRAM_TOKEN = os.environ.get("TELEGRAM_TOKEN")
+TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN")
 TELEGRAM_CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID")
 INSTA_SESSION_ID = os.environ.get("INSTA_SESSION_ID")
 TARGET_USER = os.environ.get("TARGET_INSTA_USER")
@@ -14,7 +14,7 @@ TARGET_USER = os.environ.get("TARGET_INSTA_USER")
 LAST_POST_FILE = "last_post.txt"
 
 def send_telegram_message(message):
-    url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
+    url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
     payload = {
         "chat_id": TELEGRAM_CHAT_ID,
         "text": message,
@@ -111,7 +111,7 @@ def analyze_video_with_gemini(video_path, caption):
     return response.text
 
 def main():
-    if not all([GEMINI_API_KEY, TELEGRAM_TOKEN, TELEGRAM_CHAT_ID, TARGET_USER]):
+    if not all([GEMINI_API_KEY, TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID, TARGET_USER]):
         print("필수 환경 변수(Secrets)가 설정되지 않았습니다.")
         return
 
