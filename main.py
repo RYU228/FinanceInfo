@@ -7,14 +7,14 @@ from google import genai
 
 # 1. GitHub Secrets 환경 변수 로드
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
-TELEGRAM_TOKEN = os.environ.get("TELEGRAM_TOKEN")
+TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN")
 TELEGRAM_CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID")
 INSTA_SESSION_ID = os.environ.get("INSTA_SESSION_ID")
 TARGET_USER = os.environ.get("TARGET_INSTA_USER")
 
 def send_telegram_message(message):
     """텔레그램 메시지 발송 함수"""
-    url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
+    url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
     payload = {
         "chat_id": TELEGRAM_CHAT_ID,
         "text": message,
@@ -100,7 +100,7 @@ def main():
     # 어떤 환경변수가 누락되었는지 출력
     missing_vars = []
     if not GEMINI_API_KEY: missing_vars.append("GEMINI_API_KEY")
-    if not TELEGRAM_TOKEN: missing_vars.append("TELEGRAM_TOKEN")
+    if not TELEGRAM_BOT_TOKEN: missing_vars.append("TELEGRAM_BOT_TOKEN")
     if not TELEGRAM_CHAT_ID: missing_vars.append("TELEGRAM_CHAT_ID")
     if not TARGET_USER: missing_vars.append("TARGET_INSTA_USER")
 
