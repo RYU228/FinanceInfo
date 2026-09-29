@@ -29,7 +29,8 @@ def download_latest_reels():
         download_pictures=False,
         download_videos=True,
         download_video_thumbnails=False,
-        save_metadata=False
+        save_metadata=False,
+        max_connection_attempts=1  # 429 차단 시 긴 재시도 대기 없이 즉시 종료
     )
     
     # 쿠키 세션 설정 (차단 방지)
