@@ -1,3 +1,3 @@
-yt-dlp>=2024.3.10
+apify-client
 google-genai
 requests
