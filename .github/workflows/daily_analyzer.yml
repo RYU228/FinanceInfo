@@ -2,9 +2,8 @@ name: Instagram Reels Daily Analyzer
 
 on:
   schedule:
-    # KST 14:00 (UTC 05:00) 매일 자동 실행
     - cron: '0 5 * * *'
-  workflow_dispatch: # GitHub 웹 UI에서 수동 실행 버튼 활성화
+  workflow_dispatch:
 
 jobs:
   run-analysis:
@@ -19,6 +18,13 @@ jobs:
         with:
           python-version: '3.10'
 
+      - name: Cache Last Processed Post ID
+        uses: actions/cache@v4
+        with:
+          path: last_post.txt
+          # target_user 별로 독립된 캐시 키 관리
+          key: insta-last-post-${{ secrets.TARGET_INSTA_USER }}
+
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
@@ -27,7 +33,7 @@ jobs:
       - name: Run Main Script
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           INSTA_SESSION_ID: ${{ secrets.INSTA_SESSION_ID }}
           TARGET_INSTA_USER: ${{ secrets.TARGET_INSTA_USER }}
