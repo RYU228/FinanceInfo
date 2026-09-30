@@ -46,7 +46,6 @@ def get_latest_reels_apify():
     print(f"[{TARGET_USER}] Apify API로 최신 게시물 조회 중...")
     client = ApifyClient(APIFY_API_TOKEN)
 
-    # Instagram Scraper Actor 실행 (최신 게시물 1개 추출)
     run_input = {
         "directUrls": [f"https://www.instagram.com/{TARGET_USER}/"],
         "resultsLimit": 1,
@@ -54,8 +53,12 @@ def get_latest_reels_apify():
     }
 
     try:
+        # Apify Actor 실행
         run = client.actor("apify/instagram-scraper").call(run_input=run_input)
-        dataset_items = list(client.dataset(run["defaultDatasetId"]).iterate_items())
+        
+        # [수정] 딕셔너리 형태 대신 객체 속성(점 표기법) 또는 안전한 접근 방식으로 dataset_id 가져오기
+        dataset_id = run.get("defaultDatasetId") if isinstance(run, dict) else run.default_dataset_id
+        dataset_items = list(client.dataset(dataset_id).iterate_items())
 
         if not dataset_items:
             print("게시글을 찾을 수 없습니다.")
