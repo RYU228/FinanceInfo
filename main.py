@@ -16,12 +16,31 @@ LAST_POST_FILE = "last_post.txt"
 
 def send_telegram_message(message):
     url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
+    
+    # 1차 시도: Markdown 포맷 전송
     payload = {
         "chat_id": TELEGRAM_CHAT_ID,
         "text": message,
         "parse_mode": "Markdown"
     }
-    requests.post(url, json=payload)
+    response = requests.post(url, json=payload)
+    
+    # 실패 시 마크다운 파싱 오류일 가능성이 높으므로 일반 텍스트로 재시도
+    if not response.ok:
+        print(f"⚠️️ 마크다운 방식 텔레그램 전송 실패 ({response.status_code}): {response.text}")
+        print("🔄 일반 텍스트 방식으로 재시도합니다...")
+        
+        payload_plain = {
+            "chat_id": TELEGRAM_CHAT_ID,
+            "text": message
+        }
+        res_retry = requests.post(url, json=payload_plain)
+        if not res_retry.ok:
+            raise Exception(f"텔레그램 발송 최종 실패 ({res_retry.status_code}): {res_retry.text}")
+        else:
+            print("✅ 일반 텍스트로 텔레그램 전송 성공!")
+    else:
+        print("✅ 텔레그램 전송 성공!")
 
 def get_last_processed_id():
     if os.path.exists(LAST_POST_FILE):
@@ -96,7 +115,6 @@ def analyze_video_with_gemini(video_path, caption):
     print("Gemini API에 영상 업로드 중...")
     video_file = client.files.upload(file=video_path)
     
-    # 영상 처리 대기 로직 (ACTIVE 상태 확인)
     print("Gemini 영상 처리 대기 중...")
     while video_file.state.name == "PROCESSING":
         time.sleep(2)
@@ -122,7 +140,6 @@ def analyze_video_with_gemini(video_path, caption):
         contents=[video_file, prompt]
     )
     
-    # 작업 완료 후 파일 삭제
     client.files.delete(name=video_file.name)
     return response.text
 
@@ -140,16 +157,18 @@ def main():
 
         analysis_result = analyze_video_with_gemini(video_path, caption)
         
-        message = f"📌 *[{TARGET_USER}] 최신 릴스 분석 보고서*\n\n{analysis_result}"
+        message = f"📌 [{TARGET_USER}] 최신 릴스 분석 보고서\n\n{analysis_result}"
+        
+        # 텔레그램 발송 (실패 시 예외 발생)
         send_telegram_message(message)
         
+        # 발송이 정상적으로 끝난 경우에만 저장
         save_processed_id(post_id)
-        print("텔레그램 발송 완료 및 Post ID 저장 완료!")
+        print("작업 완료!")
 
     except Exception as e:
         error_msg = f"⚠️ 인스타 분석 중 오류 발생: {str(e)}"
         print(error_msg)
-        send_telegram_message(error_msg)
 
 if __name__ == "__main__":
     main()
