@@ -1,5 +1,6 @@
 import os
 import glob
+import time
 import requests
 from apify_client import ApifyClient
 from google import genai
@@ -53,10 +54,7 @@ def get_latest_reels_apify():
     }
 
     try:
-        # Apify Actor 실행
         run = client.actor("apify/instagram-scraper").call(run_input=run_input)
-        
-        # [수정] 딕셔너리 형태 대신 객체 속성(점 표기법) 또는 안전한 접근 방식으로 dataset_id 가져오기
         dataset_id = run.get("defaultDatasetId") if isinstance(run, dict) else run.default_dataset_id
         dataset_items = list(client.dataset(dataset_id).iterate_items())
 
@@ -68,12 +66,10 @@ def get_latest_reels_apify():
         current_post_id = str(latest_item.get("id") or latest_item.get("shortCode"))
         last_post_id = get_last_processed_id()
 
-        # 중복 체크
         if current_post_id and current_post_id == last_post_id:
             print(f"이미 처리된 게시물입니다. (Post ID: {current_post_id})")
             return None, None, None
 
-        # 영상 URL 추출 및 다운로드
         video_url = latest_item.get("videoUrl")
         caption = latest_item.get("caption", "")
 
@@ -100,6 +96,15 @@ def analyze_video_with_gemini(video_path, caption):
     print("Gemini API에 영상 업로드 중...")
     video_file = client.files.upload(file=video_path)
     
+    # 영상 처리 대기 로직 (ACTIVE 상태 확인)
+    print("Gemini 영상 처리 대기 중...")
+    while video_file.state.name == "PROCESSING":
+        time.sleep(2)
+        video_file = client.files.get(name=video_file.name)
+
+    if video_file.state.name == "FAILED":
+        raise Exception("Gemini API 영상 처리 실패")
+
     prompt = f"""
 다음은 인스타그램 릴스 영상과 게시글 본문입니다.
 [게시글 본문]
@@ -117,6 +122,7 @@ def analyze_video_with_gemini(video_path, caption):
         contents=[video_file, prompt]
     )
     
+    # 작업 완료 후 파일 삭제
     client.files.delete(name=video_file.name)
     return response.text
 
