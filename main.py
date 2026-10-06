@@ -63,12 +63,13 @@ def download_video(url, output_path):
     return False
 
 def get_latest_reels_apify():
-    print(f"[{TARGET_USER}] Apify API로 최신 게시물 조회 중...")
+    print(f"[{TARGET_USER}] Apify API로 최신 릴스 조회 중...")
     client = ApifyClient(APIFY_API_TOKEN)
 
+    # directUrls에 /reels/ 경로 지정
     run_input = {
-        "directUrls": [f"https://www.instagram.com/{TARGET_USER}/"],
-        "resultsLimit": 1,
+        "directUrls": [f"https://www.instagram.com/{TARGET_USER}/reels/"],
+        "resultsLimit": 5,  # 상단 고정 요소나 불확실성에 대비해 최신 5개까지 조회 후 첫 번째 영상 선택
         "resultsType": "posts"
     }
 
@@ -78,10 +79,20 @@ def get_latest_reels_apify():
         dataset_items = list(client.dataset(dataset_id).iterate_items())
 
         if not dataset_items:
-            print("게시글을 찾을 수 없습니다.")
+            print("릴스 게시글을 찾을 수 없습니다.")
             return None, None, None
 
-        latest_item = dataset_items[0]
+        # 수집된 항목 중 '영상(videoUrl)'이 존재하는 첫 번째 항목(최신 릴스) 선택
+        latest_item = None
+        for item in dataset_items:
+            if item.get("videoUrl"):
+                latest_item = item
+                break
+
+        if not latest_item:
+            print("최신 게시물 중 영상을 찾지 못했습니다.")
+            return None, None, None
+
         current_post_id = str(latest_item.get("id") or latest_item.get("shortCode"))
         last_post_id = get_last_processed_id()
 
@@ -91,10 +102,6 @@ def get_latest_reels_apify():
 
         video_url = latest_item.get("videoUrl")
         caption = latest_item.get("caption", "")
-
-        if not video_url:
-            print("최신 게시물이 영상(릴스)이 아닙니다.")
-            return None, None, None
 
         os.makedirs("downloads", exist_ok=True)
         video_path = f"downloads/{current_post_id}.mp4"
